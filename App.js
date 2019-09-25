@@ -1,102 +1,90 @@
 import React, { Component/*, useState, useEffect*/ } from 'react';
-import { StyleSheet, Text, View, Animated, Dimensions, PanResponder } from 'react-native';
+import { Button, Text, View, Animated, Dimensions, PanResponder } from 'react-native';
 import { Provider as PaperProvider, Card } from 'react-native-paper';
 import strategies from './helpers/strategies';
-
-const AppCard = ({strategy, onPress}) => {
-  return (
-    <Card onPress={onPress}>
-      <Text style={styles.paragraph}>{strategy}</Text>
-    </Card>
-  );
-}
-
-/*
-export default function App() {
-  const position = new Animated.ValueXY();
-
-  const getCard = () => {
-    const restOfDeck = strategies.filter(s => s !== strategy);
-    const index = Math.floor(Math.random() * restOfDeck.length);
-    const newStrategy = restOfDeck[index];
-    return newStrategy;
-  }
-
-  useEffect(() => {
-    const panResponder = PanResponder.create({
-      onStartShouldSetPanResponder: (e, gestureState) => true,
-      onPanResponderMove: (e, gestureState) => {
-        console.log(e, gestureState);
-        position.setValue({
-          x: gestureState.dx,
-          y: gestureState.dy
-        });
-      },
-      onPanResponderRelease: (e, gestureState) => {
-        console.log(e, gestureState);
-      }
-    })
-  }, []);
-
-  const [strategy, setStrategy] = useState(getCard());
-
-  const handlers = {...panResponder.panHandlers};
-  return (
-    <PaperProvider>
-      <View style={styles.container}>
-        <Animated.View style={
-          { transform: position.getTranslateTransform() }
-        }>
-          {handlers}
-          <AppCard
-            strategy={strategy}
-            onPress={() => setStrategy(getCard())}
-          />
-        </Animated.View>
-      </View>
-    </PaperProvider>
-  );
-}
-*/
+import styles from './helpers/styles';
 
 class Main extends Component {
   constructor() {
     super();
     this.position = new Animated.ValueXY();
-    this.updatePosition = (e, gestureState) => {
+    this.updatePositionMove = (e, gestureState) => {
+      const { dx, dy } = gestureState;
       this.position.setValue({
-        x: gestureState.dx,
-        y: gestureState.dy
+        x: dx,
+        y: dy
       });
+    };
+    this.updatePositionRelease = (e, gestureState) => {
+      this.updatePositionMove(e, gestureState);
+      if (gestureState.dx > 120 ||
+        gestureState.dx < -120 ||
+        gestureState.dy > 120 ||
+        gestureState.dy < -40
+      ) this.handleUpdateDeck();
+      else {
+        Animated.spring(this.position, {
+          toValue: {
+            x: 0,
+            y: 0
+          },
+          friction: 6
+        }).start();
+      }
     };
     this.panResponder = new PanResponder.create({
       onStartShouldSetPanResponder: (e, gestureState) => true,
-      onPanResponderMove: this.updatePosition,
-      onPanResponderRelease: (e, gestureState) => {
-        this.position.setValue({
-          x: gestureState.dx,
-          y: gestureState.dy
-        });
-      }
+      onPanResponderMove: this.updatePositionMove,
+      onPanResponderRelease: this.updatePositionRelease
     });
-    const initDeck = strategies.slice();
+    //create a shallow, shuffled copy (Fisher-Yates)
+    const _arr = strategies.slice();
+    for (let i = (_arr.length - 1); i > 0; i -= 1) {
+      const randomIndex = Math.floor(Math.random() * (i + 1));
+      [_arr[i], _arr[randomIndex]] = [_arr[randomIndex], _arr[i]];
+    }
+    const initDeck = _arr;
     this.state = {
       deck: initDeck
     };
     this.renderCard = this.renderCard.bind(this);
+    this.handleUpdateDeck = this.handleUpdateDeck.bind(this);
+  }
+
+  handleUpdateDeck() {
+    console.log(`need to remove ${this.state.deck[0]}`);
+    this.setState({
+      deck: this.state.deck.slice(1)
+    });
+    this.position.setValue({
+      x: 0,
+      y: 0
+    });
   }
 
   renderCard(strategy, ind) {
-    const isTopCard = ind === 1;
+    const isTopCard = ind === 0;
     const cardPosStyle = isTopCard ? this.position.getLayout() : {};
-    const style = Object.assign({
+    const { width } = Dimensions.get('window');
+    const rotate = this.position.x.interpolate({
+      inputRange: [-width/2, 0, width/2],
+      outputRange: ['-10deg', '0deg', '10deg'],
+      extrapolate: 'clamp'
+    });
+    const rotateAndTranslate = {
+      transform: [
+      //...this.position.getTranslateTransform()
+    ]
+    };
+    const style = {
       height: '100%',
       width: '100%',
       position: 'absolute',
       top: 0,
-      left: 0
-    }, cardPosStyle);
-    console.log(style);
+      left: 0,
+      ...cardPosStyle,
+      ...rotateAndTranslate
+    };
     const handlers = isTopCard ? {...this.panResponder.panHandlers} : { undefinedHandler: () => undefined };
     return (
       <Animated.View
@@ -112,11 +100,11 @@ class Main extends Component {
   }
 
   render() {
-    const visibleCards = this.state.deck.slice(0, 2).map((strategy, ind) => this.renderCard(strategy, ind));
+    const visibleCards = this.state.deck.slice(0, 2).map((strategy, ind) => this.renderCard(strategy, ind)).reverse();
     return (
       <View style={styles.appContainer}>
         <View style={styles.controlsContainer}>
-
+          <Button onPress={() => console.log('about')} title="About"/>
         </View>
         <View style={styles.cardContainer}>
           {visibleCards}
@@ -135,31 +123,3 @@ export default class App extends Component {
     );
   }
 }
-
-const styles = StyleSheet.create({
-  appContainer: {
-    flex: 1,
-    flexDirection: 'column',
-    backgroundColor: '#000',
-    padding: 32,
-    paddingTop: 64
-  },
-  paragraph: {
-    margin: 24,
-    fontSize: 18,
-    textAlign: 'center'
-  },
-  controlsContainer: {
-    flex: 1
-  },
-  cardContainer: {
-    flex: 5,
-    flexDirection: 'column',
-    position: 'relative'
-  },
-  card: {
-    flex: 1,
-    height: '100%',
-    width: '100%'
-  }
-});
