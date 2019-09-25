@@ -5,19 +5,17 @@ import strategies from './helpers/strategies';
 
 const AppCardStyles = StyleSheet.create({
   card: {
+    flex: 1,
     backgroundColor: '#fff',
-    justifyContent: 'space-between',
-    alignContent: 'center',
-    alignItems: 'center'
+    justifyContent: 'center',
+    alignContent: 'center'
   }
 });
 
 const AppCard = ({strategy, onPress}) => {
   return (
     <Card style={AppCardStyles.card} onPress={onPress}>
-      <View style={AppCardStyles.view}>
-        <Text>{strategy}</Text>
-      </View>
+      <Text>{strategy}</Text>
     </Card>
   );
 }
@@ -48,7 +46,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
-    alignItems: 'center',
-    justifyContent: 'center',
+    padding: 32,
+    paddingTop: 64
   }
 });
