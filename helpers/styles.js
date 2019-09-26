@@ -21,10 +21,19 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     position: 'relative'
   },
+  animatedView: {
+    height: '100%',
+    width: '100%',
+    position: 'absolute',
+    top: 0,
+    left: 0
+  },
   card: {
     flex: 1,
     height: '100%',
-    width: '100%'
+    width: '100%',
+    justifyContent: 'center',
+    alignContent: 'center'
   }
 });
 

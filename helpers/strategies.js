@@ -13,4 +13,11 @@ const editions = [
     editionThree
 ];
 
-export default strategies = editions.reduce((accum, curr) => accum.concat(curr.filter(s => accum.indexOf(s) === -1)), []);
+let strategies = editions.reduce((accum, curr) => accum.concat(curr.filter(s => accum.indexOf(s) === -1)), []);
+
+for (let i = (strategies.length - 1); i > 0; i -= 1) {
+    const randomIndex = Math.floor(Math.random() * (i + 1));
+    [strategies[i], strategies[randomIndex]] = [strategies[randomIndex], strategies[i]];
+}
+
+export default strategies;

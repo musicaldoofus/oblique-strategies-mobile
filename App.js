@@ -8,64 +8,67 @@ class Main extends Component {
   constructor() {
     super();
     this.position = new Animated.ValueXY();
-    this.updatePositionMove = (e, gestureState) => {
-      const { dx, dy } = gestureState;
-      this.position.setValue({
-        x: dx,
-        y: dy
-      });
-      const { width } = Dimensions.get('window');
-      const rotateVal = this.position.x.interpolate({
-        inputRange: [-width/2.0, 0.0, width/2.0],
-        outputRange: ['-10deg', '0deg', '10deg'],
-        extrapolate: 'clamp'
-      });
-      const topCardOpacityVal = this.position.x.interpolate({
-        inputRange: [-width/2.0, 0.0, width/2.0],
-        outputRange: [0.0, 1.0, 0.0],
-        extrapolate: 'clamp'
-      });
-      this.setState({
-        transformStyle:[{
-          rotateZ: rotateVal
-        }],
-        topCardOpacityVal
-      }, () => console.log(rotateVal));
-    };
-    this.updatePositionRelease = (e, gestureState) => {
-      this.updatePositionMove(e, gestureState);
-      if (gestureState.dx > 120 ||
-        gestureState.dx < -120 ||
-        gestureState.dy > 120 ||
-        gestureState.dy < -40
-      ) this.handleUpdateDeck();
-      else {
-        Animated.spring(this.position, {
-          toValue: {
-            x: 0,
-            y: 0
-          },
-          friction: 6
-        }).start();
-      }
-    };
     this.panResponder = new PanResponder.create({
       onStartShouldSetPanResponder: (e, gestureState) => true,
-      onPanResponderMove: this.updatePositionMove,
-      onPanResponderRelease: this.updatePositionRelease
+      onPanResponderMove: (e, g) => this.updatePositionMove(e, g),
+      onPanResponderRelease: (e, g) => this.updatePositionRelease(e, g)
     });
-    const _arr = strategies.slice();
-    for (let i = (_arr.length - 1); i > 0; i -= 1) {
-      const randomIndex = Math.floor(Math.random() * (i + 1));
-      [_arr[i], _arr[randomIndex]] = [_arr[randomIndex], _arr[i]];
-    }
-    const initDeck = _arr;
+    const initDeck = strategies.slice();
     this.state = {
       deck: initDeck
     };
     this.renderCard = this.renderCard.bind(this);
     this.handleUpdateDeck = this.handleUpdateDeck.bind(this);
+    this.updatePositionMove = this.updatePositionMove.bind(this);
+    this.updatePositionRelease = this.updatePositionRelease.bind(this);
+    this.isSwipeOutside = this.isSwipeOutside.bind(this);
   }
+
+  updatePositionMove(e, gestureState) {
+    const { dx, dy } = gestureState;
+    this.position.setValue({
+      x: dx,
+      y: dy
+    });
+    const { width } = Dimensions.get('window');
+    const rotateVal = this.position.x.interpolate({
+      inputRange: [-width/2.0, 0.0, width/2.0],
+      outputRange: ['-10deg', '0deg', '10deg'],
+      extrapolate: 'clamp'
+    });
+    const topCardOpacityVal = this.position.x.interpolate({
+      inputRange: [-width/2.0, -(width/2.8), 0.0, width/2.8, width/2.0],
+      outputRange: [0.0, 0.9, 1.0, 0.9, 0.0],
+      extrapolate: 'clamp'
+    });
+    this.setState({
+      transformStyle:[{
+        rotateZ: rotateVal
+      }],
+      topCardOpacityVal
+    });
+  }
+
+  isSwipeOutside(dx, dy) {
+    return dx > 120 ||
+    dx < -120 ||
+    dy > 120 ||
+    dy < -40;
+  }
+
+  updatePositionRelease (e, gestureState) {
+    this.updatePositionMove(e, gestureState);
+    if (this.isSwipeOutside(gestureState.dx, gestureState.dy)) this.handleUpdateDeck();
+    else {
+      Animated.spring(this.position, {
+        toValue: {
+          x: 0,
+          y: 0
+        },
+        friction: 6
+      }).start();
+    }
+  };
 
   handleUpdateDeck() {
     this.setState({
@@ -81,12 +84,7 @@ class Main extends Component {
     const isTopCard = ind === 0;
     const cardPosStyle = isTopCard ? this.position.getLayout() : {};
     const viewStyle = {
-      height: '100%',
-      width: '100%',
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      border: 'none',
+      ...styles.animatedView,
       ...cardPosStyle,
       transform: isTopCard ? this.state.transformStyle : [],
       opacity: isTopCard ? this.state.topCardOpacityVal : 1
@@ -99,7 +97,9 @@ class Main extends Component {
         {...handlers}
       >
         <Card style={styles.card}>
-          <Text style={styles.paragraph}>{strategy}</Text>
+          <View style={styles.card}>
+            <Text style={styles.paragraph}>{strategy}</Text>
+          </View>
         </Card>
       </Animated.View>
     );
