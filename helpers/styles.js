@@ -17,7 +17,7 @@ const styles = StyleSheet.create({
     flex: 1
   },
   cardContainer: {
-    flex: 5,
+    flex: 8,
     flexDirection: 'column',
     position: 'relative'
   },
