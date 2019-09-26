@@ -14,7 +14,12 @@ const styles = StyleSheet.create({
     textAlign: 'center'
   },
   controlsContainer: {
-    flex: 1
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between'
+  },
+  controlAboutBtn: {
+    alignSelf: 'flex-end'
   },
   cardContainer: {
     flex: 8,

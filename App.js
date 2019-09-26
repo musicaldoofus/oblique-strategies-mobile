@@ -17,6 +17,7 @@ class Main extends Component {
     this.state = {
       deck: initDeck
     };
+    this.swipeArea = 120;
     this.renderCard = this.renderCard.bind(this);
     this.handleUpdateDeck = this.handleUpdateDeck.bind(this);
     this.updatePositionMove = this.updatePositionMove.bind(this);
@@ -49,16 +50,16 @@ class Main extends Component {
     });
   }
 
-  isSwipeOutside(dx, dy) {
-    return dx > 120 ||
-    dx < -120 ||
-    dy > 120 ||
-    dy < -40;
+  isSwipeOutside({dx, dy}) {
+    return dx > this.swipeArea ||
+    dx < -this.swipeArea ||
+    dy > this.swipeArea ||
+    dy < -this.swipeArea/3;
   }
 
   updatePositionRelease (e, gestureState) {
     this.updatePositionMove(e, gestureState);
-    if (this.isSwipeOutside(gestureState.dx, gestureState.dy)) this.handleUpdateDeck();
+    if (this.isSwipeOutside(gestureState)) this.handleUpdateDeck();
     else {
       Animated.spring(this.position, {
         toValue: {
@@ -84,10 +85,10 @@ class Main extends Component {
     const isTopCard = ind === 0;
     const cardPosStyle = isTopCard ? this.position.getLayout() : {};
     const viewStyle = {
-      ...styles.animatedView,
-      ...cardPosStyle,
       transform: isTopCard ? this.state.transformStyle : [],
-      opacity: isTopCard ? this.state.topCardOpacityVal : 1
+      opacity: isTopCard ? this.state.topCardOpacityVal : 1,
+      ...styles.animatedView,
+      ...cardPosStyle
     };
     const handlers = isTopCard ? {...this.panResponder.panHandlers} : { undefinedHandler: () => undefined };
     return (
@@ -109,9 +110,6 @@ class Main extends Component {
     const visibleCards = this.state.deck.slice(0, 2).map((strategy, ind) => this.renderCard(strategy, ind)).reverse();
     return (
       <View style={styles.appContainer}>
-        <View style={styles.controlsContainer}>
-          <Button onPress={() => console.log('about')} title="About"/>
-        </View>
         <View style={styles.cardContainer}>
           {visibleCards}
         </View>
